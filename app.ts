@@ -9,6 +9,9 @@ const APP_NAME = process.env.BUSY_BAR_APP_NAME ?? 'busybar-bus';
 const REFRESH_MS = Number(process.env.REFRESH_MS ?? 30000);
 const SCREEN_WIDTH = 320;
 const SCREEN_HEIGHT = 128;
+const SKY_HEIGHT = 64;
+const ROAD_Y = 84;
+const ROAD_HEIGHT = 44;
 
 export type StopInfo = {
   stopId: number;
@@ -82,7 +85,7 @@ export function parseStopInfo(html: string): StopInfo {
     minutes = raw.toLowerCase().includes('mins') ? parseMinutes(raw) ?? 5 : parseClockMinutes(raw) ?? 5;
   }
 
-  return {
+  const info: StopInfo = {
     stopId,
     stopName,
     route,
@@ -91,89 +94,156 @@ export function parseStopInfo(html: string): StopInfo {
     nextDepartureLabel,
     fetchedAt: new Date().toISOString(),
   };
+
+  return info;
 }
 
 function buildBusyBarPayload(stopInfo: StopInfo) {
   const minutesText = stopInfo.minutes <= 1 ? 'NOW' : `${stopInfo.minutes}m`;
-  const statusText = stopInfo.minutes <= 1 ? 'ARRIVING' : 'NEXT';
-  const destinationText = stopInfo.destination.length > 18 ? `${stopInfo.destination.slice(0, 18)}…` : stopInfo.destination;
+  const progress = Math.min(0.92, Math.max(0.12, 1 - stopInfo.minutes / 20));
+  const busX = Math.round(24 + progress * 170);
+
+  // Add a timestamp to force display refresh
+  const now = new Date();
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+
+  const elements = [
+    // SKY/TOP BACKGROUND RECTANGLE
+    {
+      id: 'sky',
+      type: 'rectangle',
+      x: 0,
+      y: 0,
+      width: SCREEN_WIDTH,
+      height: SKY_HEIGHT,
+      z_index: 0,
+    },
+    // ROUTE LABEL
+    {
+      id: 'route',
+      type: 'text',
+      text: `GRT ${stopInfo.route}`,
+      font: 'small',
+      x: 8,
+      y: 8,
+      z_index: 2,
+    },
+    // COUNTDOWN TIMER - LARGE
+    {
+      id: 'minutes',
+      type: 'text',
+      text: minutesText,
+      font: 'extra_large',
+      x: 160,
+      y: 22,
+      z_index: 3,
+    },
+    // GRASS/GROUND RECTANGLE
+    {
+      id: 'ground',
+      type: 'rectangle',
+      x: 0,
+      y: 64,
+      width: SCREEN_WIDTH,
+      height: SCREEN_HEIGHT - 64,
+      z_index: 0,
+    },
+    // ROAD RECTANGLE
+    {
+      id: 'road',
+      type: 'rectangle',
+      x: 0,
+      y: ROAD_Y,
+      width: SCREEN_WIDTH,
+      height: ROAD_HEIGHT,
+      z_index: 1,
+    },
+    // BUS BODY RECTANGLE
+    {
+      id: 'busBody',
+      type: 'rectangle',
+      x: busX,
+      y: 84,
+      width: 70,
+      height: 18,
+      z_index: 4,
+    },
+    // BUS TOP RECTANGLE
+    {
+      id: 'busTop',
+      type: 'rectangle',
+      x: busX + 8,
+      y: 76,
+      width: 56,
+      height: 8,
+      z_index: 4,
+    },
+    // BUS WINDOW 1
+    {
+      id: 'busWindow1',
+      type: 'rectangle',
+      x: busX + 12,
+      y: 88,
+      width: 13,
+      height: 7,
+      z_index: 5,
+    },
+    // BUS WINDOW 2
+    {
+      id: 'busWindow2',
+      type: 'rectangle',
+      x: busX + 29,
+      y: 88,
+      width: 13,
+      height: 7,
+      z_index: 5,
+    },
+    // STOP SIGN
+    {
+      id: 'stopSign',
+      type: 'rectangle',
+      x: 270,
+      y: 42,
+      width: 18,
+      height: 12,
+      z_index: 3,
+    },
+    // STOP TEXT
+    {
+      id: 'stopText',
+      type: 'text',
+      text: '2029',
+      font: 'tiny',
+      x: 272,
+      y: 44,
+      z_index: 4,
+    },
+    // DESTINATION TEXT
+    {
+      id: 'destination',
+      type: 'text',
+      text: stopInfo.destination,
+      font: 'small',
+      x: 12,
+      y: 96,
+      z_index: 2,
+    },
+    // TIMESTAMP (forces display refresh)
+    {
+      id: 'timestamp',
+      type: 'text',
+      text: seconds,
+      font: 'tiny',
+      x: 310,
+      y: 120,
+      z_index: 10,
+    },
+  ];
 
   return {
     application_name: APP_NAME,
-    priority: 50,
-    led_notification_color: '#1FA7FF80',
-    elements: [
-      {
-        id: 'bg',
-        type: 'rectangle',
-        x: 0,
-        y: 0,
-        width: SCREEN_WIDTH,
-        height: SCREEN_HEIGHT,
-        fill: 'solid',
-        fill_colors: ['#0C1F3AEE'],
-        border_width: 0,
-        z_index: 0,
-      },
-      {
-        id: 'route',
-        type: 'text',
-        text: `GRT ${stopInfo.route}`,
-        font: 'small',
-        x: 12,
-        y: 10,
-        align: 'top_left',
-        color: '#DCEFFF80',
-        z_index: 1,
-      },
-      {
-        id: 'stop',
-        type: 'text',
-        text: `STOP ${stopInfo.stopId}`,
-        font: 'tiny',
-        x: 12,
-        y: 24,
-        align: 'top_left',
-        color: '#C8E3FF80',
-        z_index: 1,
-      },
-      {
-        id: 'minutes',
-        type: 'text',
-        text: minutesText,
-        font: 'extra_large',
-        x: 0,
-        y: 42,
-        align: 'center',
-        color: '#FFFFFFFF',
-        width: SCREEN_WIDTH,
-        z_index: 2,
-      },
-      {
-        id: 'status',
-        type: 'text',
-        text: statusText,
-        font: 'tiny',
-        x: 230,
-        y: 94,
-        align: 'top_right',
-        color: '#FFE39BFF',
-        width: 76,
-        z_index: 2,
-      },
-      {
-        id: 'destination',
-        type: 'text',
-        text: destinationText,
-        font: 'small',
-        x: 12,
-        y: 96,
-        align: 'top_left',
-        color: '#BFEAFFFF',
-        width: 200,
-        z_index: 2,
-      },
-    ],
+    priority: 100,
+    elements,
   };
 }
 
@@ -191,26 +261,41 @@ async function drawToBusyBar(stopInfo: StopInfo) {
   const payload = buildBusyBarPayload(stopInfo);
   const body = JSON.stringify(payload);
 
-  const { stdout } = await execFileAsync('curl', [
-    '--silent',
-    '--show-error',
-    '--fail',
-    '-X',
-    'POST',
-    `${API_BASE}/api/display/draw`,
-    '-H',
-    'Content-Type: application/json',
-    '--data-binary',
-    body,
-  ]);
+  try {
+    const { stdout } = await execFileAsync('curl', [
+      '-X',
+      'POST',
+      `${API_BASE}/api/display/draw`,
+      '-H',
+      'Content-Type: application/json',
+      '-d',
+      body,
+      '--max-time',
+      '5',
+    ]);
 
-  return JSON.parse(stdout);
+    const result = JSON.parse(stdout);
+    
+    if (result.error) {
+      throw new Error(`Busy Bar error: ${result.error}`);
+    }
+    
+    return result;
+  } catch (error) {
+    throw error;
+  }
 }
 
 async function refresh() {
-  const stopInfo = await fetchStopInfo();
-  const result = await drawToBusyBar(stopInfo);
-  console.log(`Updated Busy Bar: ${stopInfo.route} ${stopInfo.minutes} min - ${result.result ?? 'OK'}`);
+  try {
+    const stopInfo = await fetchStopInfo();
+    const result = await drawToBusyBar(stopInfo);
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`[${timestamp}] Updated Busy Bar: ${stopInfo.route} ${stopInfo.minutes} min - ${result.result ?? 'OK'}`);
+  } catch (error) {
+    const timestamp = new Date().toLocaleTimeString();
+    console.error(`[${timestamp}] Failed to refresh Busy Bar display:`, error instanceof Error ? error.message : error);
+  }
 }
 
 async function main() {
