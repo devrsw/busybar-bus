@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Busybar Bus 23</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body data-theme="day">
+    <main class="app-shell">
+      <section class="sky-panel">
+        <div class="sky-decoration">
+          <div class="sun"></div>
+          <div class="cloud cloud-one"></div>
+          <div class="cloud cloud-two"></div>
+          <div class="cloud cloud-three"></div>
+        </div>
+
+        <div class="content-toast">
+          <p class="eyebrow">GRT Route 23</p>
+          <div class="time-row">
+            <span id="minutes">--</span>
+            <span class="unit">mins</span>
+          </div>
+          <p id="status-text" class="status-text">Next bus is on the way</p>
+          <p id="stop-label" class="stop-label">Stop 2029 • Fairway / Chicopee Hills</p>
+          <p id="route-line" class="route-line">Idlewood to Stanley Park</p>
+        </div>
+      </section>
+
+      <section class="scene-panel">
+        <div class="road"></div>
+        <div class="road-lines">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <div class="stop-pole">
+          <div class="stop-sign">2029</div>
+        </div>
+
+        <div class="bus-track">
+          <div id="bus" class="bus" aria-label="GRT bus 23 approaching stop">
+            <div class="bus-top"></div>
+            <div class="bus-body">
+              <span class="bus-window"></span>
+              <span class="bus-window"></span>
+              <span class="bus-window"></span>
+            </div>
+            <div class="bus-wheels">
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
