@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type Request, type Response } from 'express';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -17,80 +17,121 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 function buildBusyBarPayload(stopInfo: StopInfo) {
   const minutesText = stopInfo.minutes <= 1 ? 'NOW' : `${stopInfo.minutes}m`;
-  const statusText = stopInfo.minutes <= 1 ? 'ARRIVING' : 'NEXT BUS';
+  const progress = Math.min(0.92, Math.max(0.12, 1 - stopInfo.minutes / 20));
+  const busX = Math.max(16, Math.min(200, Math.round(24 + progress * 150)));
+  const routeText = `R${stopInfo.route}`;
+  const destinationText = stopInfo.destination.slice(0, 13);
 
   return {
     application_name: BUSY_BAR_APP_NAME,
-    priority: 50,
-    led_notification_color: '#1FA7FF80',
+    priority: 100,
     elements: [
       {
-        id: 'bg',
+        id: 'sky',
         type: 'rectangle',
         x: 0,
         y: 0,
         width: 320,
-        height: 128,
-        fill: '#0C1F3AEE',
-        border_width: 0,
+        height: 64,
         z_index: 0,
       },
       {
-        id: 'header',
+        id: 'route',
         type: 'text',
-        text: `GRT ${stopInfo.route}`,
+        text: routeText,
         font: 'small',
-        x: 12,
-        y: 12,
-        align: 'top_left',
-        color: '#DCEFFF80',
-        z_index: 1,
-      },
-      {
-        id: 'stop',
-        type: 'text',
-        text: `STOP ${stopInfo.stopId}`,
-        font: 'tiny',
-        x: 12,
-        y: 26,
-        align: 'top_left',
-        color: '#C8E3FF80',
-        z_index: 1,
+        x: 8,
+        y: 10,
+        z_index: 2,
       },
       {
         id: 'minutes',
         type: 'text',
         text: minutesText,
-        font: 'extra_large',
-        x: 0,
-        y: 44,
-        align: 'center',
-        color: '#FFFFFFFF',
-        width: 320,
-        z_index: 2,
+        font: 'small',
+        x: 112,
+        y: 18,
+        z_index: 3,
       },
       {
-        id: 'status',
+        id: 'ground',
+        type: 'rectangle',
+        x: 0,
+        y: 64,
+        width: 320,
+        height: 64,
+        z_index: 0,
+      },
+      {
+        id: 'road',
+        type: 'rectangle',
+        x: 0,
+        y: 84,
+        width: 320,
+        height: 44,
+        z_index: 1,
+      },
+      {
+        id: 'busBody',
+        type: 'rectangle',
+        x: busX,
+        y: 84,
+        width: 64,
+        height: 18,
+        z_index: 4,
+      },
+      {
+        id: 'busTop',
+        type: 'rectangle',
+        x: busX + 8,
+        y: 76,
+        width: 48,
+        height: 8,
+        z_index: 4,
+      },
+      {
+        id: 'busWindow1',
+        type: 'rectangle',
+        x: busX + 10,
+        y: 88,
+        width: 11,
+        height: 7,
+        z_index: 5,
+      },
+      {
+        id: 'busWindow2',
+        type: 'rectangle',
+        x: busX + 25,
+        y: 88,
+        width: 11,
+        height: 7,
+        z_index: 5,
+      },
+      {
+        id: 'stopSign',
+        type: 'rectangle',
+        x: 248,
+        y: 50,
+        width: 16,
+        height: 12,
+        z_index: 3,
+      },
+      {
+        id: 'stopText',
         type: 'text',
-        text: statusText,
+        text: '29',
         font: 'tiny',
-        x: 230,
-        y: 92,
-        align: 'top_right',
-        color: '#FFE39BFF',
-        width: 80,
-        z_index: 2,
+        x: 252,
+        y: 52,
+        z_index: 4,
       },
       {
         id: 'destination',
         type: 'text',
-        text: stopInfo.destination,
-        font: 'small',
-        x: 12,
+        text: destinationText,
+        font: 'tiny',
+        x: 8,
         y: 100,
-        align: 'top_left',
-        color: '#BFEAFFFF',
-        width: 200,
         z_index: 2,
       },
     ],
@@ -138,7 +179,7 @@ async function refreshBusyBarDisplay() {
   }
 }
 
-app.get('/api/next-bus', async (_req, res) => {
+app.get('/api/next-bus', async (_req: Request, res: Response) => {
   try {
     const stopInfo = await fetchStopInfo();
 
@@ -163,7 +204,7 @@ app.get('/api/next-bus', async (_req, res) => {
   }
 });
 
-app.post('/api/busybar/render', async (_req, res) => {
+app.post('/api/busybar/render', async (_req: Request, res: Response) => {
   try {
     const stopInfo = await fetchStopInfo();
     await drawToBusyBar(stopInfo);
@@ -181,7 +222,7 @@ app.post('/api/busybar/render', async (_req, res) => {
   }
 });
 
-app.get('*', (_req, res) => {
+app.use((_req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

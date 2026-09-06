@@ -7,11 +7,11 @@ const STOP_URL = 'https://dashboard.grt.ca/stops/2029';
 const API_BASE = process.env.BUSY_BAR_API_URL ?? 'http://10.0.4.20';
 const APP_NAME = process.env.BUSY_BAR_APP_NAME ?? 'busybar-bus';
 const REFRESH_MS = Number(process.env.REFRESH_MS ?? 30000);
-const SCREEN_WIDTH = 320;
-const SCREEN_HEIGHT = 128;
-const SKY_HEIGHT = 64;
-const ROAD_Y = 84;
-const ROAD_HEIGHT = 44;
+export const SCREEN_WIDTH = 72;
+export const SCREEN_HEIGHT = 16;
+const SKY_HEIGHT = 8;
+const ROAD_Y = 11;
+const ROAD_HEIGHT = 5;
 
 export type StopInfo = {
   stopId: number;
@@ -98,17 +98,14 @@ export function parseStopInfo(html: string): StopInfo {
   return info;
 }
 
-function buildBusyBarPayload(stopInfo: StopInfo) {
+export function buildBusyBarPayload(stopInfo: StopInfo) {
   const minutesText = stopInfo.minutes <= 1 ? 'NOW' : `${stopInfo.minutes}m`;
-  const progress = Math.min(0.92, Math.max(0.12, 1 - stopInfo.minutes / 20));
-  const busX = Math.round(24 + progress * 170);
-
-  // Add a timestamp to force display refresh
-  const now = new Date();
-  const seconds = String(now.getSeconds()).padStart(2, '0');
+  const progress = Math.min(0.92, Math.max(0.1, 1 - stopInfo.minutes / 20));
+  const busX = Math.max(8, Math.min(44, Math.round(8 + progress * 30)));
+  const routeText = `R${stopInfo.route}`;
+  const destText = stopInfo.destination.substring(0, 12);
 
   const elements = [
-    // SKY/TOP BACKGROUND RECTANGLE
     {
       id: 'sky',
       type: 'rectangle',
@@ -118,37 +115,33 @@ function buildBusyBarPayload(stopInfo: StopInfo) {
       height: SKY_HEIGHT,
       z_index: 0,
     },
-    // ROUTE LABEL
     {
       id: 'route',
       type: 'text',
-      text: `GRT ${stopInfo.route}`,
+      text: routeText,
       font: 'small',
-      x: 8,
-      y: 8,
+      x: 1,
+      y: 1,
       z_index: 2,
     },
-    // COUNTDOWN TIMER - LARGE
     {
       id: 'minutes',
       type: 'text',
       text: minutesText,
-      font: 'extra_large',
-      x: 160,
-      y: 22,
+      font: 'small',
+      x: 47,
+      y: 1,
       z_index: 3,
     },
-    // GRASS/GROUND RECTANGLE
     {
       id: 'ground',
       type: 'rectangle',
       x: 0,
-      y: 64,
+      y: SKY_HEIGHT,
       width: SCREEN_WIDTH,
-      height: SCREEN_HEIGHT - 64,
+      height: SCREEN_HEIGHT - SKY_HEIGHT,
       z_index: 0,
     },
-    // ROAD RECTANGLE
     {
       id: 'road',
       type: 'rectangle',
@@ -158,85 +151,68 @@ function buildBusyBarPayload(stopInfo: StopInfo) {
       height: ROAD_HEIGHT,
       z_index: 1,
     },
-    // BUS BODY RECTANGLE
     {
       id: 'busBody',
       type: 'rectangle',
       x: busX,
-      y: 84,
-      width: 70,
-      height: 18,
+      y: ROAD_Y + 1,
+      width: 12,
+      height: 3,
       z_index: 4,
     },
-    // BUS TOP RECTANGLE
     {
       id: 'busTop',
       type: 'rectangle',
-      x: busX + 8,
-      y: 76,
-      width: 56,
-      height: 8,
+      x: busX + 2,
+      y: ROAD_Y - 2,
+      width: 8,
+      height: 2,
       z_index: 4,
     },
-    // BUS WINDOW 1
     {
       id: 'busWindow1',
       type: 'rectangle',
-      x: busX + 12,
-      y: 88,
-      width: 13,
-      height: 7,
+      x: busX + 3,
+      y: ROAD_Y + 1,
+      width: 2,
+      height: 1,
       z_index: 5,
     },
-    // BUS WINDOW 2
     {
       id: 'busWindow2',
       type: 'rectangle',
-      x: busX + 29,
-      y: 88,
-      width: 13,
-      height: 7,
+      x: busX + 7,
+      y: ROAD_Y + 1,
+      width: 2,
+      height: 1,
       z_index: 5,
     },
-    // STOP SIGN
     {
       id: 'stopSign',
       type: 'rectangle',
-      x: 270,
-      y: 42,
-      width: 18,
-      height: 12,
+      x: 62,
+      y: 4,
+      width: 4,
+      height: 4,
       z_index: 3,
     },
-    // STOP TEXT
     {
       id: 'stopText',
       type: 'text',
-      text: '2029',
+      text: '29',
       font: 'tiny',
-      x: 272,
-      y: 44,
+      x: 63,
+      y: 5,
       z_index: 4,
     },
-    // DESTINATION TEXT
     {
       id: 'destination',
       type: 'text',
-      text: stopInfo.destination,
-      font: 'small',
-      x: 12,
-      y: 96,
-      z_index: 2,
-    },
-    // TIMESTAMP (forces display refresh)
-    {
-      id: 'timestamp',
-      type: 'text',
-      text: seconds,
+      text: destText,
       font: 'tiny',
-      x: 310,
-      y: 120,
-      z_index: 10,
+      x: 1,
+      y: 13,
+      z_index: 2,
     },
   ];
 

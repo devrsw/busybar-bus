@@ -8,7 +8,7 @@
     "start": "BUSY_BAR_API_URL=http://10.0.4.20 node dist/app.js",
     "local": "BUSY_BAR_API_URL=http://10.0.4.20 node dist/app.js",
     "dev": "tsx app.ts",
-    "test": "node --test"
+    "test": "node --import tsx --test"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
